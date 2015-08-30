@@ -1,12 +1,17 @@
 #!/usr/bin/env racket
 #lang racket
 (require racket/cmdline)
+(require racket/pretty)
 (require net/http-client)
 (require json)
 
 (define default-kodi-json-rpc-path "/jsonrpc")
 (define default-kodi-host "localhost")
 (define default-kodi-port 80)
+
+(define dict-get
+  (λ (dict attr)
+     (dict-ref dict (string->symbol attr))))
 
 ; http-rendrecv returns three values, we only care about the port
 ; because it contains the response json from the json-rpc API
@@ -40,9 +45,8 @@
 ; send a hash to kodi's json-rpc and return the response string
 (define kodi-json-rpc-call
   (λ (payload #:host [host default-kodi-host] #:port [port default-kodi-port])
-     (string->jsexpr 
-       (kodi-json-rpc-call-str 
-	 (jsexpr->string payload) #:host host #:port port))))
+     (kodi-json-rpc-call-str 
+       (jsexpr->string payload) #:host host #:port port)))
 
 (define forge-payload
   (λ (method #:params [params #hash()]
@@ -66,11 +70,11 @@
 
 (define kodi-json-rpc-all-actions
   (λ ()
-     (dict-ref
-       (dict-ref 
-         (kodi-json-rpc-introspect) 
-         (string->symbol "result"))
-       (string->symbol "methods"))))
+     (dict-get
+       (dict-get
+         (string->jsexpr (kodi-json-rpc-introspect))
+         "result")
+       "methods")))
 
 (define filter-namespace
   (λ (namespace actions)
@@ -93,9 +97,9 @@
       (for-each
         (λ (action) 
   	  (printf "~a : ~a\n" action 
-		               (dict-ref
+		               (dict-get
 			         (dict-ref actions action)
-			         (string->symbol "description"))))
+			         "description")))
   	  (filter-namespace-if-specified arg (hash-keys actions))))))
 
 (define kodi-json-rpc-getactiveplayers
@@ -104,16 +108,43 @@
 
 (define kodi-json-rpc-list-of-player-ids
   (λ ()
-     (map (λ (player) (dict-ref player (string->symbol "playerid")))
-	  (dict-ref (kodi-json-rpc-getactiveplayers) 
-		    (string->symbol "result")))))
+     (map (λ (player) (dict-get player "playerid"))
+	  (dict-get (string->jsexpr (kodi-json-rpc-getactiveplayers))
+		    "result"))))
 
 (define kodi-json-rpc-playpause
   (λ ()
      (map (λ (playerid) 
-	     (kodi-json-rpc-action "Player.Playpause" "playerid" 
-				   (number->string playerid)))
-	     (kodi-json-rpc-list-of-player-ids))))
+	          (kodi-json-rpc-action "Player.Playpause" "playerid"
+				        (number->string playerid)))
+	          (kodi-json-rpc-list-of-player-ids))))
+
+(define kodi-json-rpc-nowplaying
+  (λ ()
+     (map (λ (playerid) 
+	     (dict-get
+	       (dict-get
+	         (dict-get 
+	           (string->jsexpr 
+	      	     (kodi-json-rpc-action "Player.GetItem" "playerid" 
+			    	           (number->string playerid)))
+		   "result")
+	        "item")
+	     "label"))
+	  (kodi-json-rpc-list-of-player-ids))))
+
+(define kodictl-playpause
+  (λ (arg params)
+     (for-each
+       (λ (item)
+	  (printf "~a\n" item))
+	  (kodi-json-rpc-playpause))))
+
+(define kodictl-nowplaying
+  (λ (arg params)
+     (for-each
+       (λ (item) (printf "~a\n" item))
+       (kodi-json-rpc-nowplaying))))
 
 (define kodictl-list-commands
   (λ (arg params)
@@ -123,7 +154,9 @@
 
 (define commands
   (hasheq 
-    'playpause (cons (λ (arg params) (kodi-json-rpc-playpause)) 
+    'nowplaying (cons kodictl-nowplaying
+	         "output label of currently playing item")
+    'playpause (cons kodictl-playpause
 	         "pause if playing, play if paused")
     'help (cons kodictl-list-commands 
 		"list available commands")
@@ -134,7 +167,8 @@
   (λ (cmd args)
      (if (dict-has-key? commands cmd)
        (apply (car (dict-ref commands cmd)) args)
-       (apply kodi-json-rpc-action (flatten (cons (symbol->string cmd) args))))))
+       (apply kodi-json-rpc-action (flatten (cons (symbol->string cmd) 
+						  args))))))
 
 (define kodictl
   (command-line
@@ -146,6 +180,7 @@
 	 "$ kodictl AudioLibrary.scan"
 	 "$ kodictl Player.Playpause playerid 0"
     #:args (command [arg #f] [params #f])
-    (λ () (evaluate-command-or-api-call (string->symbol command) (list arg params)))))
+    (λ () (evaluate-command-or-api-call (string->symbol command) 
+					(list arg params)))))
 
 (kodictl)
