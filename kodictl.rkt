@@ -5,9 +5,9 @@
 (require net/http-client)
 (require json)
 
-(define default-kodi-json-rpc-path "/jsonrpc")
-(define default-kodi-host "localhost")
-(define default-kodi-port 80)
+(define kodi-host (make-parameter "localhost"))
+(define kodi-port (make-parameter 80))
+(define kodi-json-rpc-path (make-parameter "/jsonrpc"))
 
 (define dict-get
   (λ (dict attr)
@@ -27,7 +27,7 @@
 
 ; post string to json-rpc
 (define post-str-to-json-rpc-host
-  (λ (jsonstr #:host host #:port port #:uri [uri default-kodi-json-rpc-path]
+  (λ (jsonstr #:host [host (kodi-host)] #:port [port (kodi-port)] #:uri [uri (kodi-json-rpc-path)]
       #:headers [headers '("Content-Type: application/json")])
      (post-str-to-host jsonstr #:host host 
 		       #:port port #:uri uri 
@@ -35,18 +35,16 @@
 
 ; send a string to kodi's json-rpc and return the reponse string
 (define kodi-json-rpc-call-str
-  (λ (jsonstr #:host [host default-kodi-host] #:port [port default-kodi-port])
+  (λ (jsonstr)
      (read-line 
        (port-from-http-response (λ () 
-				   (post-str-to-json-rpc-host jsonstr
-							      #:host host 
-							      #:port port))))))
+				   (post-str-to-json-rpc-host jsonstr))))))
 
 ; send a hash to kodi's json-rpc and return the response string
 (define kodi-json-rpc-call
-  (λ (payload #:host [host default-kodi-host] #:port [port default-kodi-port])
+  (λ (payload)
      (kodi-json-rpc-call-str 
-       (jsexpr->string payload) #:host host #:port port)))
+       (jsexpr->string payload))))
 
 (define forge-payload
   (λ (method #:params [params #hash()]
@@ -62,7 +60,7 @@
        ([params (if param-key
 		  (hasheq (string->symbol param-key) (string->number param-value))
 		  #hash())])
-       (kodi-json-rpc-call (forge-payload action #:params params) #:port 8088))))
+       (kodi-json-rpc-call (forge-payload action #:params params)))))
 
 (define kodi-json-rpc-introspect
   (λ () 
@@ -72,7 +70,10 @@
   (λ ()
      (dict-get
        (dict-get
-         (string->jsexpr (kodi-json-rpc-introspect))
+	 (with-handlers ([exn:fail? 
+			   (λ (x) 
+			      (error "ERROR: Server didn't return JSON"))])
+			(string->jsexpr (kodi-json-rpc-introspect)))
          "result")
        "methods")))
 
@@ -186,24 +187,27 @@
     'stop (cons kodictl-stop 
 		"stop all active players")))
 
-(define evaluate-command-or-api-call
+(define kodictl-evaluate-command-or-api-call
   (λ (cmd args)
      (if (dict-has-key? commands cmd)
        (apply (car (dict-ref commands cmd)) args)
        (apply kodi-json-rpc-action (flatten (cons (symbol->string cmd) 
 						  args))))))
 
-(define kodictl
-  (command-line
-    #:program "kodictl"
-    #:usage-help "\nCommand line client for Kodi's JSON-RPC API"
-    #:ps "\nTo see all available kodictl commands run $ kodictl help"
-         "\nExecute JSON-RPC actions from the commandline"
-	 "examples: "
-	 "$ kodictl AudioLibrary.scan"
-	 "$ kodictl Player.Playpause playerid 0"
-    #:args (command [arg #f] [params #f])
-    (λ () (evaluate-command-or-api-call (string->symbol command) 
-					(list arg params)))))
-
-(kodictl)
+(command-line
+  #:program "kodictl"
+  #:once-each
+  [("-r" "--remote") host "Specify Kodi host" (kodi-host host)]
+  [("-p" "--port") port "Specify Kodi port" (kodi-port 
+					      (string->number port))]
+  [("-j" "--json-rpc-path") path "Specify Kodi JSON_RPC path" 
+			     (kodi-json-rpc-path path)]
+  #:usage-help "\nCommand line client for Kodi's JSON-RPC API"
+  #:ps "\nTo see all available kodictl commands run $ kodictl help"
+   "\nExecute JSON-RPC actions from the commandline"
+   "examples: "
+   "$ kodictl AudioLibrary.scan"
+   "$ kodictl Player.Playpause playerid 0"
+  #:args (command [arg #f] [params #f])
+  (kodictl-evaluate-command-or-api-call (string->symbol command) 
+					(list arg params)))
