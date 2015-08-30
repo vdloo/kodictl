@@ -112,32 +112,53 @@
 	  (dict-get (string->jsexpr (kodi-json-rpc-getactiveplayers))
 		    "result"))))
 
+(define kodi-json-rpc-map-active-players
+  (λ (proc)
+     (map (λ (playerid) (proc playerid))
+	  (kodi-json-rpc-list-of-player-ids))))
+
+; stop all active players
+(define kodi-json-rpc-stop
+  (λ ()
+     (kodi-json-rpc-map-active-players
+       (λ (playerid) 
+	  (kodi-json-rpc-action "Player.Stop" "playerid" 
+				(number->string playerid))))))
+
+; toggle play/pause on active players
 (define kodi-json-rpc-playpause
   (λ ()
-     (map (λ (playerid) 
-	          (kodi-json-rpc-action "Player.Playpause" "playerid"
-				        (number->string playerid)))
-	          (kodi-json-rpc-list-of-player-ids))))
+     (kodi-json-rpc-map-active-players 
+       (λ (playerid) 
+	  (kodi-json-rpc-action "Player.Playpause" "playerid" 
+				(number->string playerid))))))
 
 (define kodi-json-rpc-nowplaying
   (λ ()
-     (map (λ (playerid) 
-	     (dict-get
-	       (dict-get
-	         (dict-get 
-	           (string->jsexpr 
-	      	     (kodi-json-rpc-action "Player.GetItem" "playerid" 
-			    	           (number->string playerid)))
-		   "result")
-	        "item")
-	     "label"))
-	  (kodi-json-rpc-list-of-player-ids))))
+     (kodi-json-rpc-map-active-players
+       (λ (playerid) 
+	  (dict-get
+	    (dict-get 
+	      (dict-get 
+		(string->jsexpr 
+		  (kodi-json-rpc-action "Player.GetItem" "playerid" 
+					(number->string playerid))) 
+		"result") 
+	      "item") 
+	    "label")))))
 
+; stop active  players and blackhole output
+(define kodictl-stop
+  (λ (arg params)
+     (for-each
+       (λ (item) empty)
+	  (kodi-json-rpc-stop))))
+
+; playpause active players and blackhole output
 (define kodictl-playpause
   (λ (arg params)
      (for-each
-       (λ (item)
-	  (printf "~a\n" item))
+       (λ (item) empty)
 	  (kodi-json-rpc-playpause))))
 
 (define kodictl-nowplaying
@@ -154,14 +175,16 @@
 
 (define commands
   (hasheq 
-    'nowplaying (cons kodictl-nowplaying
-	         "output label of currently playing item")
-    'playpause (cons kodictl-playpause
-	         "pause if playing, play if paused")
     'help (cons kodictl-list-commands 
 		"list available commands")
     'list (cons kodi-json-rpc-list-actions 
-		"list all JSON-RPC actions and descriptions")))
+		"list all JSON-RPC actions and descriptions")
+    'nowplaying (cons kodictl-nowplaying 
+		      "output label of currently playing item")
+    'playpause (cons kodictl-playpause 
+		     "pause if playing, play if paused")
+    'stop (cons kodictl-stop 
+		"stop all active players")))
 
 (define evaluate-command-or-api-call
   (λ (cmd args)
