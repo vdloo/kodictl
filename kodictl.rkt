@@ -98,6 +98,23 @@
 			         (string->symbol "description"))))
   	  (filter-namespace-if-specified arg (hash-keys actions))))))
 
+(define kodi-json-rpc-getactiveplayers
+  (λ ()
+     (kodi-json-rpc-action "Player.GetActivePlayers")))
+
+(define kodi-json-rpc-list-of-player-ids
+  (λ ()
+     (map (λ (player) (dict-ref player (string->symbol "playerid")))
+	  (dict-ref (kodi-json-rpc-getactiveplayers) 
+		    (string->symbol "result")))))
+
+(define kodi-json-rpc-playpause
+  (λ ()
+     (map (λ (playerid) 
+	     (kodi-json-rpc-action "Player.Playpause" "playerid" 
+				   (number->string playerid)))
+	     (kodi-json-rpc-list-of-player-ids))))
+
 (define kodictl-list-commands
   (λ (arg params)
     (for-each 
@@ -106,10 +123,14 @@
 
 (define commands
   (hasheq 
-    'help (cons kodictl-list-commands "list available commands")
-    'list (cons kodi-json-rpc-list-actions "list all JSON-RPC actions and descriptions")))
+    'playpause (cons (λ (arg params) (kodi-json-rpc-playpause)) 
+	         "pause if playing, play if paused")
+    'help (cons kodictl-list-commands 
+		"list available commands")
+    'list (cons kodi-json-rpc-list-actions 
+		"list all JSON-RPC actions and descriptions")))
 
-(define evaluate-command-or-error
+(define evaluate-command-or-api-call
   (λ (cmd args)
      (if (dict-has-key? commands cmd)
        (apply (car (dict-ref commands cmd)) args)
@@ -125,6 +146,6 @@
 	 "$ kodictl AudioLibrary.scan"
 	 "$ kodictl Player.Playpause playerid 0"
     #:args (command [arg #f] [params #f])
-    (λ () (evaluate-command-or-error (string->symbol command) (list arg params)))))
+    (λ () (evaluate-command-or-api-call (string->symbol command) (list arg params)))))
 
 (kodictl)
