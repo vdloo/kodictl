@@ -13,6 +13,26 @@
   (λ (dict attr)
      (dict-ref dict (string->symbol attr))))
 
+; take a list and return a list with pairs of each 2 sequential items
+(define split-list-into-list-of-pairs
+  (λ (li [spli (list)] [prev empty])
+     (let ([argslen (length li)])
+          (cond 
+            [(zero? argslen) spli]
+            [(odd? argslen) 
+		  (split-list-into-list-of-pairs 
+		    (cdr li) 
+		    (append spli (list (cons 
+					 (if 
+					   (empty? prev)
+					   (error "Uneven arguments!")
+					   prev)
+					 (car li)))))]
+	    [else (split-list-into-list-of-pairs 
+		    (cdr li) 
+		    spli 
+		    (car li))]))))
+
 ; http-rendrecv returns three values, we only care about the port
 ; because it contains the response json from the json-rpc API
 (define port-from-http-response
@@ -27,8 +47,10 @@
 
 ; post string to json-rpc
 (define post-str-to-json-rpc-host
-  (λ (jsonstr #:host [host (kodi-host)] #:port [port (kodi-port)] #:uri [uri (kodi-json-rpc-path)]
-      #:headers [headers '("Content-Type: application/json")])
+  (λ (jsonstr #:host [host (kodi-host)] 
+	      #:port [port (kodi-port)] 
+	      #:uri [uri (kodi-json-rpc-path)] 
+	      #:headers [headers '("Content-Type: application/json")])
      (post-str-to-host jsonstr #:host host 
 		       #:port port #:uri uri 
 		       #:headers headers)))
@@ -54,13 +76,23 @@
 	     'params params
 	     'id id)))
 
+(define create-hash-from-arguments
+  (λ (args)
+     (for/hash ([pair (split-list-into-list-of-pairs args)])
+	       (values (string->symbol (car pair)) 
+		       (cdr pair)))))
+
 (define kodi-json-rpc-action
-  (λ (action [param-key #f] [param-value #f]) 
+  (λ args
      (let 
-       ([params (if param-key
-		  (hasheq (string->symbol param-key) (string->number param-value))
+       ([params (if (< 1 (length args))
+		  (hasheq (string->symbol (cadr args))
+			  (cond
+			    [(< 1 (length (cddr args)))
+			     (create-hash-from-arguments (cddr args))]
+			    [else (string->number (caddr args))]))
 		  #hash())])
-       (kodi-json-rpc-call (forge-payload action #:params params)))))
+       (kodi-json-rpc-call (forge-payload (car args) #:params params)))))
 
 (define kodi-json-rpc-introspect
   (λ () 
@@ -92,7 +124,7 @@
        actions)))
 
 (define kodi-json-rpc-list-actions
-  (λ (arg params)
+  (λ ([arg #f])
     (let 
       ([actions (kodi-json-rpc-all-actions)])
       (for-each
@@ -150,26 +182,26 @@
 
 ; stop active  players and blackhole output
 (define kodictl-stop
-  (λ (arg params)
+  (λ ()
      (for-each
        (λ (item) empty)
 	  (kodi-json-rpc-stop))))
 
 ; playpause active players and blackhole output
 (define kodictl-playpause
-  (λ (arg params)
+  (λ ()
      (for-each
        (λ (item) empty)
 	  (kodi-json-rpc-playpause))))
 
 (define kodictl-nowplaying
-  (λ (arg params)
+  (λ ()
      (for-each
        (λ (item) (printf "~a\n" item))
        (kodi-json-rpc-nowplaying))))
 
 (define kodictl-list-commands
-  (λ (arg params)
+  (λ ()
     (for-each 
       (λ (cmd) (printf "~a : ~a\n" cmd (cdr (dict-ref commands cmd)))) 
       (hash-keys commands))))
@@ -188,11 +220,13 @@
 		"stop all active players")))
 
 (define kodictl-evaluate-command-or-api-call
-  (λ (cmd args)
-     (if (dict-has-key? commands cmd)
-       (apply (car (dict-ref commands cmd)) args)
-       (apply kodi-json-rpc-action (flatten (cons (symbol->string cmd) 
-						  args))))))
+  (λ (args)
+     (let 
+       ([cmd (car args)]
+	[params (cdr args)])
+       (if (dict-has-key? commands (string->symbol cmd))
+         (apply (car (dict-get commands cmd)) params)
+         (apply kodi-json-rpc-action args)))))
 
 (command-line
   #:program "kodictl"
@@ -208,6 +242,5 @@
    "examples: "
    "$ kodictl AudioLibrary.scan"
    "$ kodictl Player.Playpause playerid 0"
-  #:args (command [arg #f] [params #f])
-  (kodictl-evaluate-command-or-api-call (string->symbol command) 
-					(list arg params)))
+  #:args args
+  (kodictl-evaluate-command-or-api-call args))
