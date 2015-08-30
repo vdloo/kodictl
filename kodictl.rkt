@@ -33,6 +33,14 @@
 		    spli 
 		    (car li))]))))
 
+; cast to number if string only contains digits, otherwise cast to symbol
+(define cast-string-to-type 
+  (λ (str) 
+     (if 
+       (regexp-match #px"^\\d*$" str)
+       (string->number str) 
+       (string->symbol str))))
+
 ; http-rendrecv returns three values, we only care about the port
 ; because it contains the response json from the json-rpc API
 (define port-from-http-response
@@ -90,7 +98,7 @@
 			  (cond
 			    [(< 1 (length (cddr args)))
 			     (create-hash-from-arguments (cddr args))]
-			    [else (string->number (caddr args))]))
+			    [else (cast-string-to-type (caddr args))]))
 		  #hash())])
        (kodi-json-rpc-call (forge-payload (car args) #:params params)))))
 
