@@ -84,23 +84,32 @@
 	     'params params
 	     'id id)))
 
-(define create-hash-from-arguments
-  (λ (args)
-     (for/hash ([pair (split-list-into-list-of-pairs args)])
+; creates a hash with key value each 2 sequential entries in a list
+(define create-hash-from-list-pairs
+  (λ (li)
+     (for/hash ([pair (split-list-into-list-of-pairs li)])
 	       (values (string->symbol (car pair)) 
-		       (cdr pair)))))
+		       (cast-string-to-type (cdr pair))))))
+
+(define list-if-not-list
+  (λ (m)
+     (if (list? m) m (list m))))
+
+(define create-params-from-list-or-string
+  (λ (m)
+     (let 
+       ([li (list-if-not-list m)])
+       (if (> 2 (length li)) 
+	 (car li)
+	 (create-hash-from-list-pairs li)))))
 
 (define kodi-json-rpc-action
   (λ args
-     (let 
-       ([params (if (< 1 (length args))
-		  (hasheq (string->symbol (cadr args))
-			  (cond
-			    [(< 1 (length (cddr args)))
-			     (create-hash-from-arguments (cddr args))]
-			    [else (cast-string-to-type (caddr args))]))
-		  #hash())])
-       (kodi-json-rpc-call (forge-payload (car args) #:params params)))))
+     (kodi-json-rpc-call 
+       (forge-payload 
+	 (create-params-from-list-or-string (car args))
+	 #:params (create-params-from-list-or-string 
+		    (cdr args))))))
 
 (define kodi-json-rpc-introspect
   (λ () 
