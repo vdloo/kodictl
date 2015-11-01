@@ -5,6 +5,11 @@
 (require net/http-client)
 (require json)
 
+(provide kodictl-evaluate-command-or-api-call)
+(provide kodi-host)
+(provide kodi-port)
+(provide kodi-json-rpc-path)
+
 (define kodi-host (make-parameter "localhost"))
 (define kodi-port (make-parameter 80))
 (define kodi-json-rpc-path (make-parameter "/jsonrpc"))
@@ -228,27 +233,15 @@
 		"stop all active players")))
 
 (define kodictl-evaluate-command-or-api-call
-  (λ (args)
+  (λ (args host port path)
      (let 
        ([cmd (car args)]
 	[params (cdr args)])
-       (if (dict-has-key? commands (string->symbol cmd))
-         (apply (car (dict-get commands cmd)) params)
-         (apply kodi-json-rpc-action args)))))
+       (begin
+	 (kodi-host host)
+	 (kodi-port port)
+	 (kodi-json-rpc-path path)
+         (if (dict-has-key? commands (string->symbol cmd))
+           (apply (car (dict-get commands cmd)) params)
+           (apply kodi-json-rpc-action args))))))
 
-(command-line
-  #:program "kodictl"
-  #:once-each
-  [("-r" "--remote") host "Specify Kodi host" (kodi-host host)]
-  [("-p" "--port") port "Specify Kodi port" (kodi-port 
-					      (string->number port))]
-  [("-j" "--json-rpc-path") path "Specify Kodi JSON_RPC path" 
-			     (kodi-json-rpc-path path)]
-  #:usage-help "\nCommand line client for Kodi's JSON-RPC API"
-  #:ps "\nTo see all available kodictl commands run $ kodictl help"
-   "\nExecute JSON-RPC actions from the commandline"
-   "examples: "
-   "$ kodictl AudioLibrary.scan"
-   "$ kodictl Player.Playpause playerid 0"
-  #:args args
-  (kodictl-evaluate-command-or-api-call args))
