@@ -1,11 +1,11 @@
 #!/usr/bin/env racket
 #lang racket
-(require racket/cmdline)
 (require racket/pretty)
-(require net/http-client)
 (require json)
 
 (provide kodictl-evaluate-command-or-api-call)
+
+(require "rpc.rkt")
 
 (define dict-get
   (λ (dict attr)
@@ -38,26 +38,6 @@
        (regexp-match #px"^\\d*$" str)
        (string->number str) 
        (string->symbol str))))
-
-; http-rendrecv returns three values, we only care about the port
-; because it contains the response json from the json-rpc API
-(define port-from-http-response
-  (λ (http-response)
-     (caddr (call-with-values http-response list))))
-
-; http post data in the form of a string
-(define post-str-to-host
-  (λ (str #:host host #:port port #:uri uri #:headers headers)
-     (http-sendrecv host uri #:port port #:method "POST"
-                	     #:headers headers #:data str)))
-
-; post string to json-rpc
-(define post-str-to-json-rpc-host
-  (λ (jsonstr #:host host #:port port #:uri uri 
-	      #:headers [headers '("Content-Type: application/json")])
-     (post-str-to-host jsonstr #:host host 
-		       #:port port #:uri uri 
-		       #:headers headers)))
 
 ; send a string to kodi's json-rpc and return the reponse string
 (define kodi-json-rpc-call-str
