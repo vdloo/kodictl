@@ -4,9 +4,19 @@
 
 (provide parse-args)
 
-(define kodi-host (make-parameter "localhost"))
-(define kodi-port (make-parameter 80))
-(define kodi-json-rpc-path (make-parameter "/jsonrpc"))
+(define env-if-not-defined
+  (λ (value)
+    (λ (key)
+       (if (not (getenv key))
+         (putenv key value)
+	 #f))))
+
+(define kodi-host 
+  (env-if-not-defined "kodi-host"))
+(define kodi-port 
+  (env-if-not-defined "kodi-port"))
+(define kodi-json-rpc-path
+  (env-if-not-defined "kodi-json-rpc-path"))
 
 (define parse-args 
   (λ (entrypoint)
@@ -25,4 +35,8 @@
        "$ kodictl AudioLibrary.scan"
        "$ kodictl Player.Playpause playerid 0"
       #:args args
-      (entrypoint args kodi-host kodi-port kodi-json-rpc-path))))
+      (begin
+	(kodi-host "localhost")
+	(kodi-port "80")
+	(kodi-json-rpc-path "/jsonrpc")
+	(entrypoint args kodi-host kodi-port kodi-json-rpc-path)))))
