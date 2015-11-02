@@ -6,13 +6,6 @@
 (require json)
 
 (provide kodictl-evaluate-command-or-api-call)
-(provide kodi-host)
-(provide kodi-port)
-(provide kodi-json-rpc-path)
-
-(define kodi-host (make-parameter "localhost"))
-(define kodi-port (make-parameter 80))
-(define kodi-json-rpc-path (make-parameter "/jsonrpc"))
 
 (define dict-get
   (λ (dict attr)
@@ -60,9 +53,7 @@
 
 ; post string to json-rpc
 (define post-str-to-json-rpc-host
-  (λ (jsonstr #:host [host (kodi-host)] 
-	      #:port [port (kodi-port)] 
-	      #:uri [uri (kodi-json-rpc-path)] 
+  (λ (jsonstr #:host host #:port port #:uri uri 
 	      #:headers [headers '("Content-Type: application/json")])
      (post-str-to-host jsonstr #:host host 
 		       #:port port #:uri uri 
@@ -73,7 +64,11 @@
   (λ (jsonstr)
      (read-line 
        (port-from-http-response (λ () 
-				   (post-str-to-json-rpc-host jsonstr))))))
+				   (post-str-to-json-rpc-host 
+				     jsonstr
+				     #:host (getenv "KODI_HOST")
+				     #:port (string->number (getenv "KODI_PORT"))
+				     #:uri (getenv "KODI_JSON_RPC_PATH")))))))
 
 ; send a hash to kodi's json-rpc and return the response string
 (define kodi-json-rpc-call
@@ -233,15 +228,10 @@
 		"stop all active players")))
 
 (define kodictl-evaluate-command-or-api-call
-  (λ (args host port path)
+  (λ (args)
      (let 
        ([cmd (car args)]
 	[params (cdr args)])
-       (begin
-	 (kodi-host host)
-	 (kodi-port port)
-	 (kodi-json-rpc-path path)
-         (if (dict-has-key? commands (string->symbol cmd))
-           (apply (car (dict-get commands cmd)) params)
-           (apply kodi-json-rpc-action args))))))
-
+       (if (dict-has-key? commands (string->symbol cmd))
+         (apply (car (dict-get commands cmd)) params)
+	 (apply kodi-json-rpc-action args)))))
