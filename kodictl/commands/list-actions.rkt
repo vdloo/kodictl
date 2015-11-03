@@ -47,4 +47,3 @@
 			         (dict-ref actions action)
 			         "description")))
   	  (filter-namespace-if-specified arg (hash-keys actions))))))
-
