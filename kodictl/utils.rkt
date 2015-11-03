@@ -8,7 +8,7 @@
 
 (define dict-get
   (λ (dict attr)
-     (dict-ref dict (string->symbol attr))))
+     (dict-ref dict (string->symbol attr) #f)))
 
 ; take a list and return a list with pairs of each 2 sequential items
 (define split-list-into-list-of-pairs

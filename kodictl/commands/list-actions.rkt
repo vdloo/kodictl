@@ -2,14 +2,15 @@
 #lang racket
 (require json)
 
-(require "../action.rkt")
+(require "../attempt.rkt")
 (require "../utils.rkt")
 
 (provide kodi-json-rpc-list-actions)
+(provide kodi-json-rpc-all-actions)
 
 (define kodi-json-rpc-introspect
   (λ () 
-     (kodi-json-rpc-action "JsonRPC.Introspect")))
+     (kodi-json-rpc-attempt '("JsonRPC.Introspect"))))
 
 (define kodi-json-rpc-all-actions
   (λ ()
