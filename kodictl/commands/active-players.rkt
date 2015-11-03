@@ -4,6 +4,7 @@
 
 (require "../action.rkt")
 (require "../utils.rkt")
+
 (provide kodi-json-rpc-map-active-players)
 
 (define kodi-json-rpc-getactiveplayers

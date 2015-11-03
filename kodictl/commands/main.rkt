@@ -3,6 +3,8 @@
 
 (require "list-actions.rkt")
 (require "active-players.rkt")
+(require "nowplaying.rkt")
 
 (provide kodi-json-rpc-list-actions)
 (provide kodi-json-rpc-map-active-players)
+(provide kodictl-nowplaying)
