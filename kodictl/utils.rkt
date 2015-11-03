@@ -1,5 +1,5 @@
 #!/usr/bin/env racket
-#lang racket/base
+#lang racket
 
 (provide cast-string-to-type)
 (provide split-list-into-list-of-pairs)
