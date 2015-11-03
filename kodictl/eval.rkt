@@ -1,6 +1,5 @@
 #!/usr/bin/env racket
 #lang racket
-(require racket/pretty)
 (require json)
 
 (provide kodictl-evaluate-command-or-api-call)
@@ -8,21 +7,6 @@
 (require "utils.rkt")
 (require "action.rkt")
 (require "commands/main.rkt")
-
-; toggle play/pause on active players
-(define kodi-json-rpc-playpause
-  (λ ()
-     (kodi-json-rpc-map-active-players 
-       (λ (playerid) 
-	  (kodi-json-rpc-action "Player.Playpause" "playerid" 
-				(number->string playerid))))))
-
-; playpause active players and blackhole output
-(define kodictl-playpause
-  (λ ()
-     (for-each
-       (λ (item) empty)
-	  (kodi-json-rpc-playpause))))
 
 (define kodictl-list-commands
   (λ ()
