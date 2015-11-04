@@ -33,5 +33,18 @@
 	 output 
 	 (kodi-json-rpc-try-contains args (hash-keys options))))))
 
+(define kodi-json-rpc-permutations
+  (λ (permutations options)
+     (if (empty? permutations)
+       #f
+       (let
+         ([output (kodi-json-rpc-dispatch (car permutations) options)])
+         (if output 
+   	   output 
+           (kodi-json-rpc-permutations (cdr permutations) options))))))
+
 (define kodi-json-rpc-action
-  (λ args (kodi-json-rpc-dispatch args (kodi-json-rpc-all-actions))))
+  (λ args (kodi-json-rpc-permutations 
+	     (permutations args) 
+	     (kodi-json-rpc-all-actions))))
+

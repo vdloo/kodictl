@@ -32,7 +32,6 @@
 	     'params params
 	     'id id)))
 
-
 (define kodi-json-rpc-try-call
   (λ (args params)
      (let

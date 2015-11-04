@@ -33,10 +33,10 @@
 ; cast to number if string only contains digits, otherwise cast to symbol
 (define cast-string-to-type 
   (λ (str) 
-     (if 
-       (regexp-match #px"^\\d*$" str)
-       (string->number str) 
-       (string->symbol str))))
+    (if 
+      (regexp-match #px"^\\d*$" str)
+        (string->number str) 
+         str)))
 
 (define create-hash-from-arguments
   (λ (args)
