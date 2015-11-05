@@ -21,8 +21,10 @@
 ; send a hash to kodi's json-rpc and return the response string
 (define kodi-json-rpc-call
   (λ (payload)
-     (kodi-json-rpc-call-str 
-       (jsexpr->string payload))))
+     (cons payload 
+	   (string->jsexpr 
+	     (kodi-json-rpc-call-str 
+	       (jsexpr->string payload))))))
 
 (define forge-payload
   (λ (method #:params [params #hash()]
@@ -36,7 +38,7 @@
   (λ (args params)
      (let
        ([output (kodi-json-rpc-call (forge-payload (car args) #:params params))])
-       (if (dict-get (string->jsexpr output) "error")
+       (if (dict-get (cdr output) "error")
 	   #f
 	   output))))
 
@@ -51,4 +53,3 @@
 			    [else (cast-string-to-type (caddr args))]))
 		  #hash())])
        (kodi-json-rpc-try-call args params))))
-

@@ -14,7 +14,7 @@
 (define kodi-json-rpc-list-of-player-ids
   (λ ()
      (map (λ (player) (dict-get player "playerid"))
-	  (dict-get (string->jsexpr (kodi-json-rpc-getactiveplayers))
+	  (dict-get  (cdr (kodi-json-rpc-getactiveplayers))
 		    "result"))))
 
 (define kodi-json-rpc-map-active-players

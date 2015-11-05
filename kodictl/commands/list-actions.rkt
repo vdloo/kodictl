@@ -16,10 +16,7 @@
   (λ ()
      (dict-get
        (dict-get
-	 (with-handlers ([exn:fail? 
-			   (λ (x) 
-			      (error "ERROR: Server didn't return JSON"))])
-			(string->jsexpr (kodi-json-rpc-introspect)))
+	 (cdr (kodi-json-rpc-introspect))
          "result")
        "methods")))
 

@@ -15,7 +15,7 @@
 	  (dict-get
 	    (dict-get 
 	      (dict-get 
-		(string->jsexpr 
+		(cdr 
 		  (kodi-json-rpc-action "Player.GetItem" "playerid" 
 					(number->string playerid))) 
 		"result") 
