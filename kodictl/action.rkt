@@ -43,8 +43,20 @@
    	   output 
            (kodi-json-rpc-permutations (cdr permutations) options))))))
 
+(define kodi-json-rpc-get-signature
+  (λ (permutations options)
+     (printf "Can't make anything out of that command, sorry!\nTry $kodictl introspect for more information.\n")))
+
+(define kodi-json-rpc-try-or-introspect
+  (λ (permutations options) 
+     (let ([output (kodi-json-rpc-permutations 
+		     permutations
+		     options)]) 
+       (if output 
+	 output 
+	 (kodi-json-rpc-get-signature permutations options)))))
+
 (define kodi-json-rpc-action
-  (λ args (kodi-json-rpc-permutations 
+  (λ args (kodi-json-rpc-try-or-introspect 
 	     (permutations args) 
 	     (kodi-json-rpc-all-actions))))
-
