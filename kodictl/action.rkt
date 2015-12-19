@@ -10,51 +10,69 @@
 (provide kodi-json-rpc-action)
 
 (define kodi-json-rpc-try-contains
-  (λ (args options)
+  (λ (args options match-procedure)
      (let
        ([option (string-downcase (symbol->string (car options)))])
        (if (empty? (cdr options))
 	 #f
          (if (string-contains option (string-downcase (car args)))
-	   (kodi-json-rpc-attempt (cons option (cdr args)))
-	   (kodi-json-rpc-try-contains args (cdr options)))))))
+	   (match-procedure (cons option (cdr args)))
+	   (kodi-json-rpc-try-contains args (cdr options) match-procedure))))))
 
 (define kodi-json-rpc-try-equals
-  (λ (args options)
+  (λ (args options match-procedure)
      (if (dict-get options (car args))
-       (kodi-json-rpc-attempt args)
+       (match-procedure args)
        #f)))
+
+(define kodi-json-rpc-try-permutations-until-success
+  (λ (args options match-procedure)
+     (let
+       ([output (kodi-json-rpc-try-equals args options match-procedure)])
+       (if output 
+	 output 
+	 (kodi-json-rpc-try-contains args (hash-keys options) match-procedure)))))
 
 (define kodi-json-rpc-dispatch
   (λ (args options)
-     (let
-       ([output (kodi-json-rpc-try-equals args options)])
+     (kodi-json-rpc-try-permutations-until-success args options kodi-json-rpc-attempt)))
+
+(define kodi-json-rpc-data-from-introspect
+  (λ (args)
+     (let 
+       ([output (dict-get (downcase-hash-keys (kodi-json-rpc-all-actions)) (car args))])
+       (if output
+	 (cons args output)
+	 #f))))
+
+(define kodi-json-rpc-get-signature
+  (λ (args options)
+     (let ([output (kodi-json-rpc-try-permutations-until-success args options kodi-json-rpc-data-from-introspect)])
        (if output 
-	 output 
-	 (kodi-json-rpc-try-contains args (hash-keys options))))))
+	 (begin 
+	   (printf "Arguments ~a are not valid for ~a.\nThe API expects this:\n" (cdar output)(caar output))
+	   (pretty-print (cdr output)))
+	 (printf "Can't make anything out of that command, sorry!\n")))))
 
 (define kodi-json-rpc-permutations
-  (λ (permutations options)
+  (λ (permutations options permutation-procedure)
      (if (empty? permutations)
        #f
        (let
-         ([output (kodi-json-rpc-dispatch (car permutations) options)])
+         ([output (permutation-procedure (car permutations) options)])
          (if output 
    	   output 
-           (kodi-json-rpc-permutations (cdr permutations) options))))))
-
-(define kodi-json-rpc-get-signature
-  (λ (permutations options)
-     (printf "Can't make anything out of that command, sorry!\nTry $kodictl introspect for more information.\n")))
+           (kodi-json-rpc-permutations (cdr permutations) options permutation-procedure))))))
 
 (define kodi-json-rpc-try-or-introspect
   (λ (permutations options) 
      (let ([output (kodi-json-rpc-permutations 
 		     permutations
-		     options)]) 
+		     options 
+		     kodi-json-rpc-dispatch)]) 
        (if output 
 	 output 
-	 (kodi-json-rpc-get-signature permutations options)))))
+	 (kodi-json-rpc-permutations permutations options kodi-json-rpc-get-signature)))))
 
 (define kodi-json-rpc-action
   (λ args (kodi-json-rpc-try-or-introspect 

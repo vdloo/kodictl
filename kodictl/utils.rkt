@@ -5,6 +5,7 @@
 (provide split-list-into-list-of-pairs)
 (provide dict-get)
 (provide create-hash-from-arguments)
+(provide downcase-hash-keys)
 
 (define dict-get
   (λ (dict attr)
@@ -44,3 +45,6 @@
 	       (values (string->symbol (car pair)) 
 		       (cdr pair)))))
 
+(define downcase-hash-keys
+  (λ (h)
+     (make-hash (hash-map h (λ (key value) (cons (string->symbol (string-downcase (symbol->string key))) value))))))
