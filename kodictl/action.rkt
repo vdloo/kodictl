@@ -71,7 +71,10 @@
 		     options 
 		     kodi-json-rpc-dispatch)]) 
        (if output 
-	 output 
+	 (begin
+	   (printf "Command executed succesfully\n")
+	   (pretty-print output)
+	 )
 	 (kodi-json-rpc-permutations permutations options kodi-json-rpc-get-signature)))))
 
 (define kodi-json-rpc-action
