@@ -34,4 +34,4 @@
 	[params (cdr args)])
        (if (dict-has-key? commands (string->symbol cmd))
          (apply (car (dict-get commands cmd)) params)
-	 (apply kodi-json-rpc-action args)))))
+	 (apply kodi-json-rpc-action-and-exit args)))))
