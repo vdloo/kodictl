@@ -27,7 +27,9 @@
     'previous (cons kodictl-next 
 		    "play previous on all active players")
     'next (cons kodictl-next 
-		     "play next on all active players")
+		"play next on all active players")
+    'shuffle (cons kodictl-partymode
+		   "partymode")
     'stop (cons kodictl-stop 
 		"stop all active players")))
 
