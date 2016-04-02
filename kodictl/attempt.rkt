@@ -5,6 +5,8 @@
 (require "utils.rkt")
 (require "rpc.rkt")
 
+(provide forge-payload)
+(provide kodi-json-rpc-call)
 (provide kodi-json-rpc-attempt)
 
 ; send a string to kodi's json-rpc and return the reponse string

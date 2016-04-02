@@ -24,6 +24,10 @@
 		      "output label of currently playing item")
     'playpause (cons kodictl-playpause 
 		     "pause if playing, play if paused")
+    'previous (cons kodictl-next 
+		    "play previous on all active players")
+    'next (cons kodictl-next 
+		     "play next on all active players")
     'stop (cons kodictl-stop 
 		"stop all active players")))
 
