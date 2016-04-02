@@ -6,9 +6,12 @@
 (require "nowplaying.rkt")
 (require "stop.rkt")
 (require "playpause.rkt")
+(require "goto.rkt")
 
 (provide kodi-json-rpc-list-actions)
 (provide kodi-json-rpc-map-active-players)
 (provide kodictl-nowplaying)
 (provide kodictl-stop)
 (provide kodictl-playpause)
+(provide kodictl-previous)
+(provide kodictl-next)
