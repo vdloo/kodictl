@@ -1,6 +1,6 @@
 #!/usr/bin/env racket
 #lang racket/base
-(require json)
+(require json-rpc-client)
 
 (require "../attempt.rkt")
 (require "active-players.rkt")
@@ -13,7 +13,8 @@
   (λ (to)
      (kodi-json-rpc-map-active-players
        (λ (playerid)
-	  (kodi-json-rpc-call 
+	  (json-rpc-client
+	    (getenv "KODI_HOST")
 	    (forge-payload 
 	      "Player.GoTo"
 	      #:params (hasheq 

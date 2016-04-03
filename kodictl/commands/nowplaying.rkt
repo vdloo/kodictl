@@ -15,9 +15,8 @@
 	  (dict-get
 	    (dict-get 
 	      (dict-get 
-		(cdr 
-		  (kodi-json-rpc-action "Player.GetItem" "playerid" 
-					(number->string playerid))) 
+		(kodi-json-rpc-action "Player.GetItem" "playerid" 
+				      (number->string playerid))
 		"result") 
 	      "item") 
 	    "label")))))
