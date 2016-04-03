@@ -1,32 +1,13 @@
 #!/usr/bin/env racket
 #lang racket/base
 (require json)
+(require json-rpc-client)
 
 (require "utils.rkt")
-(require "rpc.rkt")
 
 (provide forge-payload)
-(provide kodi-json-rpc-call)
 (provide kodi-json-rpc-attempt)
 
-; send a string to kodi's json-rpc and return the reponse string
-(define kodi-json-rpc-call-str
-  (λ (jsonstr)
-     (read-line 
-       (port-from-http-response (λ () 
-				   (post-str-to-json-rpc-host 
-				     jsonstr
-				     #:host (getenv "KODI_HOST")
-				     #:port (string->number (getenv "KODI_PORT"))
-				     #:uri (getenv "KODI_JSON_RPC_PATH")))))))
-
-; send a hash to kodi's json-rpc and return the response string
-(define kodi-json-rpc-call
-  (λ (payload)
-     (cons payload 
-	   (string->jsexpr 
-	     (kodi-json-rpc-call-str 
-	       (jsexpr->string payload))))))
 
 (define forge-payload
   (λ (method #:params [params #hash()]
@@ -39,8 +20,9 @@
 (define kodi-json-rpc-try-call
   (λ (args params)
      (let
-       ([output (kodi-json-rpc-call (forge-payload (car args) #:params params))])
-       (if (dict-get (cdr output) "error")
+       ([output (json-rpc-client (getenv "KODI_HOST") 
+				 (forge-payload (car args) #:params params))])
+       (if (dict-get output "error")
 	   #f
 	   output))))
 

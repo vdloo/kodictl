@@ -16,7 +16,7 @@
   (λ ()
      (dict-get
        (dict-get
-	 (cdr (kodi-json-rpc-introspect))
+	 (kodi-json-rpc-introspect)
          "result")
        "methods")))
 
