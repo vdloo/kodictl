@@ -69,9 +69,6 @@ $ kodictl help
 
 Installation
 ------------
-Make sure you have Racket 6.2 or greater (need a recent net/http-client).
-You can get it [here](http://racket-lang.org/download/).
-
 ```
 git clone https://github.com/vdloo/kodictl && cd kodictl
 ```
