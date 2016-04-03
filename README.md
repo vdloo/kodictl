@@ -23,32 +23,42 @@ AudioLibrary.Export : Exports all items from the audio library
 ...
 ```
 
-Specify host with ```-r```, defaults to ```localhost```
+Specify host with ```-r```, defaults to ```http://localhost:8080/jsonrpc```
 ```
-$ kodictl -r 192.168.12.34 list
-```
-
-Specify port with ```-p```, defaults to ```80```
-```
-$ kodictl -p 8088 list
+$ kodictl -r http://localhost:8080/jsonrpc" list
 ```
 
 
 Some built-in shortcuts:
 
-- Player.PlayPause for all players
+- Player.GoTo next in playlist for all active players
+```
+$ kodictl next
+```
+
+- Player.GoTo previous in playlist for all active players
+```
+$ kodictl previous
+```
+
+- Player.PlayPause for all active players
 ```
 $ kodictl playpause
 ```
 
-- Player.Stop for all players
+- Player.Stop for all active players
 ```
 $ kodictl stop
 ```
 
-- Player.GetItem for all players
+- Player.GetItem for all active players
 ```
 $ kodictl nowplaying
+```
+
+- Start music partymode playlist (shuffle)
+```
+$ kodictl shuffle
 ```
 
 - List all available shortcuts
