@@ -31,7 +31,15 @@
     'shuffle (cons kodictl-partymode
 		   "partymode")
     'stop (cons kodictl-stop 
-		"stop all active players")))
+		"stop all active players")
+    'mute (cons kodictl-mute 
+		"mute and unmute")
+    'volumeup (cons kodictl-volumeup
+		    "increase volume")
+    'volumedown (cons kodictl-volumedown
+		      "decrease volume")
+  )
+)
 
 (define kodictl-evaluate-command-or-api-call
   (λ (args)

@@ -66,6 +66,17 @@ $ kodictl shuffle
 $ kodictl help
 ```
 
+- Mute/Unmute
+```
+$ kodictl mute
+```
+
+- Increase/Decrease volume by 10 points
+```
+$ kodictl volumeup
+$ kodictl volumedown
+```
+
 
 Installation
 ------------
