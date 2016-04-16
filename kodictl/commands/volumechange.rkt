@@ -2,21 +2,12 @@
 #lang racket/base
 (require json-rpc-client)
 
-(require "../attempt.rkt")
+(require "input-action.rkt")
 
 (provide kodictl-mute)
 (provide kodictl-volumedown)
 (provide kodictl-volumeup)
 
-
-(define kodictl-input-action
-  (λ (action)
-    (json-rpc-client
-      (getenv "KODI_HOST")
-      (forge-payload 
-        "Input.ExecuteAction"
-        #:params (hasheq 
-	  'action action)))))
 
 (define kodictl-mute
   (λ ()
