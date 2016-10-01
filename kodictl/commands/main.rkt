@@ -9,6 +9,7 @@
 (require "goto.rkt")
 (require "partymode.rkt")
 (require "volumechange.rkt")
+(require "notify.rkt")
 
 (provide kodi-json-rpc-list-actions)
 (provide kodi-json-rpc-map-active-players)
@@ -21,3 +22,4 @@
 (provide kodictl-mute)
 (provide kodictl-volumeup)
 (provide kodictl-volumedown)
+(provide kodictl-notify)

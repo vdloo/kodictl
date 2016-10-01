@@ -38,6 +38,8 @@
 		    "increase volume")
     'volumedown (cons kodictl-volumedown
 		      "decrease volume")
+    'notify (cons kodictl-notify
+		  "send a GUI notification")
   )
 )
 
