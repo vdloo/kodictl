@@ -77,6 +77,11 @@ $ kodictl volumeup
 $ kodictl volumedown
 ```
 
+- Send a GUI Notification
+```
+$ kodictl notify title "The message to display"
+```
+
 
 Installation
 ------------
